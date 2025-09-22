@@ -92,12 +92,6 @@ Get active loans:
 curl "http://localhost:3000/api/loans?status=active"
 ```
 
-## Testing
-
-```bash
-npm test
-```
-
 ## Environment Variables
 
 See `.env.example` for available configuration options.
