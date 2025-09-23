@@ -1,3 +1,16 @@
+//  Credit Scoring Components (Total: 100 points):
+
+// Payment History (25 points): (EMIs paid on time / Total EMIs) * 25
+// Loan Count (15 points): Inverse relationship - fewer loans = higher score
+// Current Year Activity (20 points): Recent loan activity penalty
+// Loan Volume (25 points): Total borrowed vs approved limit ratio
+// Current Debt Ratio (15 points): Active loan amount vs approved limit
+
+
+
+
+
+
 const dataStore = require('../utils/dataStore');
 
 class CreditService {
