@@ -1,9 +1,7 @@
 require('dotenv').config({ path: '.env.local' });
 const express = require('express');
 const cors = require('cors');
-const customerRoutes = require('./src/routes/customers');
-const loanRoutes = require('./src/routes/loans');
-const { validate, schemas } = require('./src/utils/validation');
+const creditRoutes = require('./src/routes/credit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -18,12 +16,15 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    message: 'Banking Backend System',
+    message: 'Credit Approval System - Banking Backend',
     author: 'Ayush Sharma',
     version: '1.0.0',
     endpoints: {
-      customers: '/api/customers',
-      loans: '/api/loans'
+      register: '/register',
+      checkEligibility: '/check-eligibility',
+      createLoan: '/create-loan',
+      viewLoan: '/view-loan/:loan_id',
+      viewLoans: '/view-loans/:customer_id'
     }
   });
 });
@@ -37,8 +38,12 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-app.use('/api/customers', validate(schemas.customerSearch), customerRoutes);
-app.use('/api/loans', validate(schemas.loanFilter), loanRoutes);
+// Credit system endpoints
+app.post('/register', creditRoutes.register);
+app.post('/check-eligibility', creditRoutes.checkEligibility);
+app.post('/create-loan', creditRoutes.createLoan);
+app.get('/view-loan/:loan_id', creditRoutes.viewLoan);
+app.get('/view-loans/:customer_id', creditRoutes.viewLoans);
 
 app.use('/api/*', (req, res) => {
   res.status(404).json({

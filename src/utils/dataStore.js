@@ -19,16 +19,16 @@ class DataStore {
 
       customerData.Sheet1.forEach(data => {
         const customer = Customer.fromExcelData(data);
-        this.customers.set(customer.customerId, customer);
-        this.customerLoans.set(customer.customerId, []);
+        this.customers.set(customer.customer_id, customer);
+        this.customerLoans.set(customer.customer_id, []);
       });
 
       loanData.Sheet1.forEach(data => {
         const loan = Loan.fromExcelData(data);
-        this.loans.set(loan.loanId, loan);
+        this.loans.set(loan.loan_id, loan);
         
-        if (this.customerLoans.has(loan.customerId)) {
-          this.customerLoans.get(loan.customerId).push(loan.loanId);
+        if (this.customerLoans.has(loan.customer_id)) {
+          this.customerLoans.get(loan.customer_id).push(loan.loan_id);
         }
       });
 
@@ -73,9 +73,9 @@ class DataStore {
     const searchTerm = query.toLowerCase();
     return Array.from(this.customers.values())
       .filter(customer => 
-        customer.firstName.toLowerCase().includes(searchTerm) ||
-        customer.lastName.toLowerCase().includes(searchTerm) ||
-        customer.customerId.toString().includes(searchTerm)
+        customer.first_name.toLowerCase().includes(searchTerm) ||
+        customer.last_name.toLowerCase().includes(searchTerm) ||
+        customer.customer_id.toString().includes(searchTerm)
       )
       .map(customer => customer.toJSON());
   }
@@ -105,6 +105,64 @@ class DataStore {
         avgPaymentRatio: Math.round(avgPaymentRatio * 100) / 100
       }
     };
+  }
+
+  // New methods for credit system
+  async createCustomer(customerData) {
+    this.initialize();
+    
+    // Generate new customer ID
+    const maxId = Math.max(...Array.from(this.customers.keys()), 0);
+    const newCustomerId = maxId + 1;
+    
+    customerData.customer_id = newCustomerId;
+    const customer = new Customer(customerData);
+    
+    this.customers.set(newCustomerId, customer);
+    this.customerLoans.set(newCustomerId, []);
+    
+    return customer;
+  }
+
+  async createLoan(loanData) {
+    this.initialize();
+    
+    // Generate new loan ID
+    const maxId = Math.max(...Array.from(this.loans.keys()), 0);
+    const newLoanId = maxId + 1;
+    
+    loanData.loan_id = newLoanId;
+    loanData.date_of_approval = new Date().toISOString().split('T')[0];
+    loanData.emis_paid_on_time = 0;
+    
+    const loan = new Loan(loanData);
+    
+    this.loans.set(newLoanId, loan);
+    
+    if (this.customerLoans.has(loan.customer_id)) {
+      this.customerLoans.get(loan.customer_id).push(newLoanId);
+    }
+    
+    return loan;
+  }
+
+  async getLoanWithCustomer(loanId) {
+    this.initialize();
+    const loan = this.loans.get(parseInt(loanId));
+    if (!loan) return null;
+    
+    const customer = this.customers.get(loan.customer_id);
+    
+    return {
+      ...loan.toJSON(),
+      customer: customer ? customer.toJSON() : null
+    };
+  }
+
+  async getCustomerLoans(customerId) {
+    this.initialize();
+    const loanIds = this.customerLoans.get(parseInt(customerId)) || [];
+    return loanIds.map(loanId => this.loans.get(loanId)).filter(loan => loan).map(loan => loan.toJSON());
   }
 }
 
